@@ -1,0 +1,103 @@
+//PCCOLE JOB MSGCLASS=X,MSGLEVEL=(1,1),CLASS=B,             
+//         REGION=0M,NOTIFY=&SYSUID                         
+//**********************************************************
+//* PARAMETER AREA                                         
+//* ATTENTION:                                             
+//* SYSTSIN MUST BE ADJUSTED AS WELL!!!                     
+//**********************************************************
+// SET SRCMBR=MBRNAM          <- MEMBER NAME SOURCE         
+// SET SRCFIL=MY.COBOL.SRC    <- DSNAME SOURCE             
+// SET CPYBKS=MY.COPY.BOOKS   <- DSD WITH COPYBOOKS         
+// SET DCLGEN=MY.DCL.GEN      <- STRUCTURES FROM DCLGEN     
+// SET DBRMFIL=MY.COBOL.DBRM  <- OUTPUT PREPROCESSOR       
+// SET LOADLIB=MY.LOAD.LIB    <- FILENAME LOADLIB           
+//**********************************************************
+//* PRECOMPILE                                             
+//**********************************************************
+//PRECOM   EXEC PGM=DSNHPC,                                 
+//             PARM='HOST(IBMCOB),XREF,SOURCE,FLAG(I),APOST'
+//STEPLIB  DD DSNAME=DSNC10.SDSNLOAD,DISP=SHR               
+//DBRMLIB  DD DSNAME=&DBRMFIL(&SRCMBR),DISP=SHR             
+//SYSLIB   DD DSNAME=&DCLGEN,DISP=SHR                       
+//SYSIN    DD DSNAME=&SRCFIL(&SRCMBR),DISP=SHR             
+//SYSCIN   DD DSNAME=&&DSNHOUT,UNIT=SYSDA,                 
+//            DISP=(NEW,PASS),SPACE=(800,(500,500))         
+//SYSPRINT DD SYSOUT=*                                     
+//SYSTERM  DD SYSOUT=*                                     
+//SYSDUMP  DD SYSOUT=*                                     
+//SYSUT1   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT2   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//**********************************************************
+//* COMPILE                                                 
+//**********************************************************
+//COBCOMP  EXEC PGM=IGYCRCTL,COND=(4,LT,PRECOM),           
+//            PARM='LIB,SOURCE'                             
+//STEPLIB  DD DSN=IGY620.SIGYCOMP,DISP=SHR                 
+//SYSLIB   DD DSN=&CPYBKS,DISP=SHR                         
+//SYSIN    DD DSN=&&DSNHOUT,DISP=(OLD,DELETE)               
+//SYSPRINT DD SYSOUT=*                                     
+//SYSLIN   DD DSNAME=&&LOADSET,UNIT=SYSDA,                 
+//            DISP=(MOD,PASS),SPACE=(TRK,(3,3)),           
+//            DCB=(BLKSIZE=3200)                           
+//SYSUT1   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT2   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT3   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT4   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT5   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT6   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT7   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT8   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT9   DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT10  DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT11  DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT12  DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT13  DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT14  DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSUT15  DD UNIT=SYSDA,SPACE=(CYL,(1,1))                 
+//SYSMDECK DD UNIT=SYSALLDA,SPACE=(CYL,(1,1)),VOL=(,,,1)   
+//**********************************************************
+//* LINK EDIT                                               
+//**********************************************************
+//LKED     EXEC PGM=HEWL,COND=(4,LT,COBCOMP),REGION=0M     
+//SYSLIB   DD   DSN=CEE.SCEELKED,DISP=SHR                   
+//         DD   DSNAME=DSNC10.SDSNLOAD,DISP=SHR             
+//SYSPRINT DD   SYSOUT=*                                   
+//SYSLIN   DD   DSN=&&LOADSET,DISP=(OLD,DELETE)             
+//SYSLMOD  DD   DSN=&LOADLIB(&SRCMBR),DISP=SHR             
+//SYSUT1   DD   UNIT=SYSDA,SPACE=(CYL,(1,1))               
+//**********************************************************
+//* BIND                                                   
+//**********************************************************
+//BIND     EXEC PGM=IKJEFT01,REGION=0M,COND=(4,LT,LKED)     
+//STEPLIB  DD   DSN=DSNC10.SDSNLOAD,DISP=SHR               
+//DBRMLIB  DD   DSN=&DBRMFIL(&SRCMBR),DISP=SHR             
+//SYSTSPRT DD   SYSOUT=*                                   
+//SYSPRINT DD   SYSOUT=*                                   
+//SYSOUT   DD   SYSOUT=*                                   
+//SYSDUMP  DD   SYSOUT=*                                   
+//SYSTSIN  DD   *                                           
+  DSN SYSTEM(DBCG)                                         
+  BIND PLAN(DF01)-                                         
+      MEMBER(MBRNAM)-                                       
+      QUALIFIER(DF)-                                       
+      ENCODING(EBCDIC)-                                     
+      ACTION(REPLACE)                                       
+  END                                                       
+/*                                                         
+//**********************************************************
+//* RUN                                                     
+//**********************************************************
+//RUNSTP   EXEC PGM=IKJEFT01,REGION=0M                     
+//STEPLIB  DD   DSN=DSNC10.SDSNEXIT,DISP=SHR               
+//         DD   DSN=DSNC10.SDSNLOAD,DISP=SHR               
+//SYSPRINT DD   SYSOUT=*                                   
+//SYSTSPRT DD   SYSOUT=*                                   
+//SYSUDUMP DD   SYSOUT=*                                   
+//SYSOUT   DD   SYSOUT=*                                   
+//SYSTSIN  DD   *                                           
+  DSN SYSTEM (DBCG)                                         
+     RUN PROGRAM(MBRNAM)-                                   
+     PLAN(DF01)-                                           
+     LIBRARY ('MY.LOAD.LIB')                               
+  END                                                       
+/*           
