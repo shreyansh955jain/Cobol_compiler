@@ -1,0 +1,15 @@
+//CHECKFILE JOB ...
+//STEP1   EXEC PGM=IEBGENER
+//SYSPRINT DD  SYSOUT=A
+//SYSIN    DD  DUMMY
+//SYSUT1   DD  DSN=your.input.file,DISP=SHR  <-- Input file
+//SYSUT2   DD  DSN=&&TEMPFILE,DISP=(NEW,PASS),SPACE=(CYL,(1,1))
+//STEP2   EXEC PGM=IDCAMS
+//SYSIN    DD  *
+  REPRO - 
+    INFILE(SYSUT2) -    <-- Check if the temporary file has records
+    OUTFILE(SYSOUT) -   <-- Output the result
+/*
+//STEP3   EXEC PGM=YOUR_PROGRAM
+//INPUT    DD  DSN=&&TEMPFILE,DISP=SHR
+//...
