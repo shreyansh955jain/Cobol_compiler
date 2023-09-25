@@ -1,0 +1,59 @@
+Certainly, here's a brief explanation of the IDCAMS return codes:
+
+1. **RC=0**: Successful completion - The operation completed successfully without errors.
+
+2. **RC=4**: Warning condition - The operation completed with non-fatal issues, like a record not found.
+
+3. **RC=8**: Invalid request - The request or parameters provided were invalid or incorrect.
+
+4. **RC=12**: Catalog or catalog management error - Issues related to the dataset catalog, such as an entry not found.
+
+5. **RC=16**: Dataset not found - The specified dataset or file does not exist.
+
+6. **RC=20**: Insufficient system resources - Not enough system resources (e.g., space) to complete the operation.
+
+7. **RC=24**: Security violation - Insufficient permissions to perform the operation.
+
+8. **RC=28**: End of file - IDCAMS reached the end of the dataset during processing.
+
+9. **RC=32**: Dataset already exists - Attempting to create a dataset with a name that already exists.
+
+10. **RC=36**: Data integrity error - Issues with the integrity of the data being processed.
+
+11. **RC=40**: Record not found - The requested record does not exist in the dataset.
+
+12. **RC=44**: VSAM error - Issues specific to VSAM datasets.
+
+13. **RC=48**: Alternate index not synchronized - An issue with an alternate index in a VSAM dataset.
+
+14. **RC=52**: Invalid dataset organization - Problems with the organization of the dataset.
+
+15. **RC=56**: Dataset in use - Attempting to access a dataset that is currently in use.
+
+16. **RC=60**: Invalid password - Incorrect password provided for secure datasets.
+
+17. **RC=64**: Invalid dataset type - Issues related to the type of dataset being accessed.
+
+18. **RC=68**: Record length error - Problems with the length of records in the dataset.
+
+19. **RC=72**: Invalid key - Issues related to key values in the dataset.
+
+20. **RC=76**: Catalog already exists - Trying to create a catalog that already exists.
+
+21. **RC=80**: Catalog not found - The specified catalog does not exist.
+
+22. **RC=84**: Insufficient buffer space - Not enough buffer space for the operation.
+
+23. **RC=88**: Logical error - A general logical error occurred during processing.
+
+24. **RC=92**: Undefined job - Attempting to reference an undefined job.
+
+25. **RC=96**: Unsuccessful allocation - Allocation of resources (e.g., space) failed.
+
+26. **RC=100**: IDCAMS error - A generic IDCAMS error code.
+
+27. **RC=104**: Data set password error - Issues with the password for a dataset.
+
+28. **RC=108**: Catalog security error - Security-related issues with the dataset catalog.
+
+These return codes provide information about the outcome of IDCAMS operations, helping users diagnose and address any issues that may have occurred during dataset management tasks.
