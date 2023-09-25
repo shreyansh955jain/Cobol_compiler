@@ -1,0 +1,23 @@
+During a DB2 reorganization (REORG) process, various abnormal termination conditions, known as "abends" (short for "abnormal ends"), can occur. These abends indicate errors or exceptional situations that can disrupt the reorg process. Here are some possible abends that can occur during a DB2 REORG process:
+
+1. **SQLCODE -904**: This is often referred to as the "Resource Unavailable" abend. It occurs when the REORG process encounters contention for a resource (usually a database object) that is unavailable due to concurrent activity. The reorg process may need to be retried after the resource becomes available.
+
+2. **SQLCODE -911**: This is the "Deadlock" abend. It occurs when the reorg process is unable to obtain a required lock because of a deadlock situation with other concurrent transactions. Typically, the process will need to be restarted to resolve the deadlock.
+
+3. **SQLCODE -922**: The "Authorization Failure" abend occurs when the user running the REORG process does not have the necessary privileges to perform the operation. Appropriate permissions should be granted to resolve this issue.
+
+4. **SQLCODE -818**: The "Timestamp Mismatch" abend happens when the REORG process encounters a mismatch in timestamps between the input data and the data in the table being reorganized. This might require data corrections or adjustments.
+
+5. **SQLCODE -927**: The "Inoperative Index" abend occurs when an index required for the REORG operation is in an inoperative state. It might need to be rebuilt or reorganized before running the REORG.
+
+6. **SQLCODE -9220**: This is a generic abend for other authorization failures, not just the ones related to the user running the REORG process. It can include issues with authorization for system resources or database objects.
+
+7. **SQLCODE -1217**: The "Table In Use" abend occurs when the table being reorganized is already in use by another transaction. The process may need to be scheduled during a maintenance window or when the table is not actively used.
+
+8. **SQLCODE -9043**: This abend occurs when the REORG process detects a data integrity issue while processing the table. Data inconsistencies should be resolved before reattempting the REORG.
+
+9. **SQLCODE -912**: The "Row Change" abend occurs when the number of rows in the table being reorganized changes during the reorg process. This might be due to concurrent inserts or deletes. A restart might be needed.
+
+10. **SQLCODE -532**: The "Foreign Key Violation" abend happens when there are referential integrity constraints on the table being reorganized, and the reorg process violates these constraints. Data corrections are needed.
+
+These are some common abends that can occur during a DB2 REORG process. The specific abend codes and messages may vary depending on the version of DB2 and the configuration of your database environment. When an abend occurs, it's important to consult the DB2 documentation, review the error message, and take appropriate actions to resolve the issue before resuming the REORG process
