@@ -1,0 +1,43 @@
+Thank you for providing the index details. Based on the information provided, here are some tuning suggestions:
+
+1. **Check Index Utilization:**
+   - The query uses `ORDER BY RR25.NACTN, RR25.CADMC`. The `IXRR2501` index starts with `NACTN` and `CADMC` as the first two columns, which means this index should be efficiently used for sorting. This is beneficial for your `ORDER BY` clause, so no changes are needed here.
+   
+2. **Filtering Condition on `TPRFY`:**
+   - The `IXRR2501` index includes `TPRFY` as the 8th column. However, since the `WHERE` clause only checks `TPRFY <> ' '`, this might not be efficiently used in the filtering. If filtering on `TPRFY` is frequent and covers a significant subset, consider creating a separate index focusing on `TPRFY` alone. This is especially relevant if `TPRFY` has low cardinality (few unique values).
+
+3. **Minimize Join Impact:**
+   - Since `TBRR2G` has only one row, it's unnecessary to index it unless other queries also access this table frequently. The join should have minimal impact on performance given the single-row nature. Ensure that the optimizer is aware of the small size of `TBRR2G`, which should avoid any unnecessary performance overhead.
+
+4. **Reduce Redundant Calculations:**
+   - The calculations involving `((YEAR(RR2G.DCADT) * 12) + MONTH(RR2G.DCADT))` are repeated multiple times in the query. Consider computing this value once and using it in subsequent parts of the query. This will reduce CPU overhead.
+
+   You can create a temporary result using a common table expression (CTE) like this:
+
+   ```sql
+   WITH CTE_RR2G AS (
+       SELECT ((YEAR(RR2G.DCADT) * 12) + MONTH(RR2G.DCADT)) AS CalculatedValue
+       FROM CORP.TBRR2G RR2G
+   )
+   SELECT
+       RR25.NACTN,
+       RR25.CADMC,
+       -- other columns,
+       (CTE_RR2G.CalculatedValue - ((YEAR(RR25.DSPDT) * 12) + MONTH(RR25.DSPDT))) as DSPDT_Diff,
+       -- use the CalculatedValue wherever it is repeated
+   FROM CORP.TBRR25 RR25, CTE_RR2G
+   WHERE RR25.TPRFY <> ' '
+   ORDER BY RR25.NACTN, RR25.CADMC
+   FOR FETCH ONLY;
+   ```
+
+5. **Review Index IXRR2501:**
+   - The `IXRR2501` index includes 9 columns. While it might be helpful for some queries, indexes with many columns can be heavy on maintenance during insert/update operations. Check if all these columns are necessary for your query workload or if a smaller index can suffice.
+
+6. **Check Unused Indexes:**
+   - Evaluate whether all indexes on `TBRR25` are necessary. Unused or infrequently used indexes consume storage and increase maintenance overhead. Dropping such indexes can improve overall performance.
+
+7. **Use the DB2 EXPLAIN Tool:**
+   - Run `EXPLAIN` on your query to confirm the access path chosen by DB2 and ensure it's using the `IXRR2501` index efficiently. Look for potential table scans or non-optimal index usage.
+
+By implementing these tuning suggestions, you should be able to optimize your query's performance. Let me know if you'd like further assistance on any specific area.
