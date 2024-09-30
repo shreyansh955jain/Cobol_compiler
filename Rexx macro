@@ -1,0 +1,44 @@
+/* REXX to search for members in a PDS and copy those with a matching string */
+
+parse arg src_pds search_string tgt_pds
+
+/* Allocate the source PDS */
+"ALLOCATE DATASET('"src_pds"') FILE(SRCPDS) SHR REUSE"
+
+/* Allocate the target PDS */
+"ALLOCATE DATASET('"tgt_pds"') FILE(TGTPDS) NEW SPACE(5,5) TRACKS RECFM(F,B) LRECL(80) DSORG(PO) BLKSIZE(8000)"
+
+"LISTDS '"src_pds"' MEMBERS"    /* List all members of the source PDS */
+do while (queued() > 0)
+   parse pull member_name
+
+   /* Ignore system output from LISTDS command */
+   if member_name = 'MEMBER' | member_name = 'NAME' then
+      iterate
+
+   /* Check member content */
+   address ISPEXEC "VIEW DATASET('"src_pds"("member_name")')"
+
+   /* Read member content line by line */
+   found = 0
+   do forever
+      parse pull rec
+      if rec = "" then leave
+
+      /* Check if the string is found */
+      if pos(search_string, rec) > 0 then do
+         found = 1
+         leave
+      end
+   end
+
+   /* Copy member to target PDS if the string was found */
+   if found then
+      "COPY '"src_pds"("member_name")' '"tgt_pds"("member_name")'"
+end
+
+/* Deallocate datasets */
+"FREE FILE(SRCPDS)"
+"FREE FILE(TGTPDS)"
+
+exit
