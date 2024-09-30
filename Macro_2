@@ -1,0 +1,86 @@
+/* REXX to search for members in a PDS, match a string, and write to output */
+
+pds = '' /* Global variable for the PDS details */
+
+/* Main process starts here */
+call init_var
+call fetch_members
+call main_process
+call write_output
+exit
+
+/* Procedure to initialize variables */
+init_var:
+    /* Set the source PDS, target PDS, and search string */
+    pds.1 = 'SYSS.JOBTRAC.LOC081.JCLLIB'     /* Source PDS */
+    pds.2 = 'REORG'                          /* String to search for */
+    pds.3 = 'TSO096d.OUTT1.REORGRX'          /* Target PDS */
+    return
+
+/* Procedure to fetch members from the PDS */
+fetch_members:
+    "ALLOCATE DATASET('"pds.1"') FILE(SRCPDS) SHR REUSE"
+    "LISTDS '"pds.1"' MEMBERS"    /* List all members of the source PDS */
+    
+    /* Process the output of LISTDS */
+    queue ''
+    do while (queued() > 0)
+       parse pull member_name
+
+       /* Ignore unnecessary LISTDS output */
+       if member_name = 'MEMBER' | member_name = 'NAME' then
+          iterate
+
+       if member_name ¬= '' then do
+          members = members + 1
+          pds.members.m(members) = member_name /* Store member name */
+       end
+    end
+    return
+
+/* Main processing procedure to search members for the string */
+main_process:
+    found_members = 0
+
+    do i = 1 to members
+       member_name = pds.members.m(i)
+
+       /* View and process the member */
+       address ISPEXEC "VIEW DATASET('"pds.1"("member_name")')"
+
+       /* Read member content line by line */
+       found = 0
+       do forever
+          parse pull rec
+          if rec = "" then leave
+
+          /* Check if the string is found */
+          if pos(pds.2, rec) > 0 then do
+             found = 1
+             leave
+          end
+       end
+
+       /* Store found members for later writing */
+       if found then do
+          found_members = found_members + 1
+          pds.found_members.f(found_members) = member_name
+       end
+    end
+    return
+
+/* Write the output to the new PDS */
+write_output:
+    /* Allocate the target PDS */
+    "ALLOCATE DATASET('"pds.3"') FILE(TGTPDS) NEW SPACE(5,5) TRACKS RECFM(F,B) LRECL(80) DSORG(PO) BLKSIZE(8000)"
+
+    /* Copy matched members */
+    do i = 1 to found_members
+       member_name = pds.found_members.f(i)
+       "COPY '"pds.1"("member_name")' '"pds.3"("member_name")'"
+    end
+
+    /* Deallocate datasets */
+    "FREE FILE(SRCPDS)"
+    "FREE FILE(TGTPDS)"
+    return
