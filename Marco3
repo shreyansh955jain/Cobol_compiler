@@ -1,0 +1,95 @@
+/* REXX to search for members in a PDS, match a string, and write to output */
+
+pds = '' /* Global variable for the PDS details */
+members = 0  /* Initialize the members count to 0 */
+
+/* Main process starts here */
+call init_var
+call fetch_members
+if members > 0 then call main_process /* Only call main_process if members > 0 */
+call write_output
+exit
+
+/* Procedure to initialize variables */
+init_var:   /* Routine starts here */
+    /* Set the source PDS, target PDS, and search string */
+    pds.1 = 'SYSS.JOBTRAC.LOC081.JCLLIB'     /* Source PDS */
+    pds.2 = 'REORG'                          /* String to search for */
+    pds.3 = 'TSO096d.OUTT1.REORGRX'          /* Target PDS */
+    return                                   /* End of the routine */
+
+fetch_members:  /* Routine starts here */
+    "ALLOCATE DATASET('"pds.1"') FILE(SRCPDS) SHR REUSE"
+    "LISTDS '"pds.1"' MEMBERS"    /* List all members of the source PDS */
+    
+    /* Process the output of LISTDS */
+    queue ''
+    do while (queued() > 0)
+       parse pull member_name
+
+       /* Ignore unnecessary LISTDS output */
+       if member_name = 'MEMBER' | member_name = 'NAME' then
+          iterate
+
+       if member_name ¬= '' then do
+          members = members + 1  /* Increment the members counter */
+          pds.members.m(members) = member_name /* Store member name */
+       end
+    end
+
+    if members = 0 then
+        say 'No members found in the PDS'
+    
+    return
+
+main_process:   /* Routine starts here */
+    found_members = 0
+
+    do i = 1 to members
+       member_name = pds.members.m(i)
+
+       /* Use VIEW or EXECIO to read the member content without displaying */
+       "ALLOCATE DATASET('"pds.1"("member_name")') FILE(INFILE) SHR REUSE"
+
+       found = 0
+       do while queued() > 0
+          "EXECIO 1 DISKR INFILE (STEM line."
+          if line.1 = "" then leave
+
+          /* Check if the string is found */
+          if pos(pds.2, line.1) > 0 then do
+             found = 1
+             leave
+          end
+       end
+
+       "FREE FILE(INFILE)"
+
+       /* If found, store the member for copying */
+       if found then do
+          found_members = found_members + 1
+          pds.found_members.f(found_members) = member_name
+       end
+    end
+    return
+
+write_output:  /* Routine starts here */
+    /* Allocate the target PDS */
+    if found_members > 0 then do
+        "ALLOCATE DATASET('"pds.3"') FILE(TGTPDS) NEW SPACE(5,5) TRACKS" -
+        "RECFM(F,B) LRECL(80) DSORG(PO) BLKSIZE(8000)"
+
+        /* Copy matched members */
+        do i = 1 to found_members
+           member_name = pds.found_members.f(i)
+           "COPY '"pds.1"("member_name")' '"pds.3"("member_name")'"
+        end
+
+        /* Deallocate datasets */
+        "FREE FILE(SRCPDS)"
+        "FREE FILE(TGTPDS)"
+    end
+    else
+        say 'No matching members found in the PDS'
+    
+    return
